@@ -36,10 +36,7 @@ function App() {
 
       <Container className="mt-4">
         <Routes>
-          
           <Route path="/cadastrar-gasto" element={<CadastrarGasto adicionarDespesa={adicionarDespesa} />} />
-
-          
           <Route path="/lista-gasto" element={<ListaDespesa despesas={despesas} removerDespesa={removerDespesa} />} />
         </Routes>
       </Container>
