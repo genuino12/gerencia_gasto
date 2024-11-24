@@ -1,16 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Form, Alert } from 'react-bootstrap';
 
-const CadastrarGasto = ({ adicionarDespesa }) => {
+const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
   const [formData, setFormData] = useState({
-    Tipo: '', 
+    Tipo: '',
     Valor: '',
     DataVencimento: '',
-    Responsavel: '' 
+    Responsavel: 'Lucas Genuíno de Jesus',
+    Observacoes: '',
   });
 
-  const [erro, setErro] = useState('');
+  const [erros, setErros] = useState({});
   const [sucesso, setSucesso] = useState(false);
+
+  useEffect(() => {
+    if (usuarioLogado?.nome) {
+      setFormData((prevData) => ({ ...prevData, Responsavel: usuarioLogado.nome }));
+    }
+  }, [usuarioLogado]);
 
   const formatarValor = (valor) => {
     const valorFormatado = valor.replace(/\D/g, '');
@@ -19,32 +26,31 @@ const CadastrarGasto = ({ adicionarDespesa }) => {
       : 'R$ ' + valorFormatado;
   };
 
-  const validarFormulario = () => {
-    if (!formData.Tipo || !formData.Valor || !formData.DataVencimento || !formData.Responsavel) {
-      setErro('Todos os campos são obrigatórios!');
-      return false;
-    }
+  const formatarDataParaISO = (dataBR) => {
+    if (!dataBR) return '';
+    const [dia, mes, ano] = dataBR.split('/');
+    return `${ano}-${mes}-${dia}`;
+  };
 
-    if (formData.Valor === 'R$ ') {
-      setErro('O valor deve ser válido.');
-      return false;
+  const validarFormulario = () => {
+    const novosErros = {};
+
+    if (!formData.Tipo) novosErros.Tipo = 'Selecione o tipo de despesa.';
+    if (!formData.Valor || formData.Valor === 'R$ ') novosErros.Valor = 'Digite um valor válido.';
+    if (!formData.DataVencimento) novosErros.DataVencimento = 'Selecione uma data de vencimento.';
+    if (!formData.Observacoes || formData.Observacoes.trim().length < 10) {
+      novosErros.Observacoes = 'As observações devem conter pelo menos 10 caracteres.';
     }
 
     const dataAtual = new Date();
     const dataInserida = new Date(formData.DataVencimento);
 
-    if (isNaN(dataInserida.getTime())) {
-      setErro('A data de vencimento é inválida.');
-      return false;
+    if (formData.DataVencimento && (isNaN(dataInserida.getTime()) || dataInserida < dataAtual.setHours(0, 0, 0, 0))) {
+      novosErros.DataVencimento = 'A data de vencimento deve ser válida e não pode ser anterior a hoje.';
     }
 
-    if (dataInserida < dataAtual.setHours(0, 0, 0, 0)) {
-      setErro('A data de vencimento não pode ser anterior a hoje.');
-      return false;
-    }
-
-    setErro('');
-    return true;
+    setErros(novosErros);
+    return Object.keys(novosErros).length === 0;
   };
 
   const Envio = (e) => {
@@ -54,13 +60,16 @@ const CadastrarGasto = ({ adicionarDespesa }) => {
         id: Date.now(),
         Tipo: formData.Tipo,
         Valor: formData.Valor,
-        DataVencimento: formData.DataVencimento,
-        Responsavel: formData.Responsavel 
+        DataVencimento: formData.DataVencimento, 
+        Responsavel: formData.Responsavel,
+        Observacoes: formData.Observacoes,
       };
       adicionarDespesa(novaDespesa);
-      setFormData({ Tipo: '', Valor: '', DataVencimento: '', Responsavel: '' });
-      setErro('');
+      setFormData({ Tipo: '', Valor: '', DataVencimento: '', Observacoes: '' });
+      setErros({});
       setSucesso(true);
+
+      setTimeout(() => setSucesso(false), 3000);
     }
   };
 
@@ -70,15 +79,15 @@ const CadastrarGasto = ({ adicionarDespesa }) => {
   };
 
   const Identificar_DataVencimento = (e) => {
-    setFormData({ ...formData, DataVencimento: e.target.value });
+    const data = e.target.value;
+    setFormData({ ...formData, DataVencimento: data });
   };
 
   return (
     <div>
       <h2>Cadastrar Gasto</h2>
 
-      {erro && <Alert variant="danger">{erro}</Alert>}
-      {sucesso && <Alert variant="success">Despesa cadastrada com sucesso!</Alert>}
+      {sucesso && <Alert variant="success">Despesa cadastrada com sucesso.</Alert>}
 
       <Form onSubmit={Envio}>
         <Form.Group controlId="formTipo">
@@ -87,7 +96,6 @@ const CadastrarGasto = ({ adicionarDespesa }) => {
             as="select"
             value={formData.Tipo}
             onChange={(e) => setFormData({ ...formData, Tipo: e.target.value })}
-            required
           >
             <option value="">Selecionar a despesa</option>
             <option value="água">Água</option>
@@ -96,6 +104,8 @@ const CadastrarGasto = ({ adicionarDespesa }) => {
             <option value="material">Gastos de Materiais</option>
             <option value="Funcionarios">Pagamento dos Funcionários</option>
           </Form.Control>
+          
+          {erros.Tipo && <Alert variant="danger">{erros.Tipo}</Alert>}
         </Form.Group>
 
         <Form.Group controlId="formValor">
@@ -106,29 +116,39 @@ const CadastrarGasto = ({ adicionarDespesa }) => {
             value={formData.Valor}
             onChange={Identificar_Valor}
           />
+          
+          {erros.Valor && <Alert variant="danger">{erros.Valor}</Alert>}
         </Form.Group>
 
         <Form.Group controlId="formDataVencimento">
           <Form.Label>Data de Vencimento:</Form.Label>
           <Form.Control
-            type="date"
+            type="date" 
             value={formData.DataVencimento}
             onChange={Identificar_DataVencimento}
           />
+          
+          {erros.DataVencimento && <Alert variant="danger">{erros.DataVencimento}</Alert>}
         </Form.Group>
 
         <Form.Group controlId="formResponsavel">
           <Form.Label>Nome do Responsável:</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="Digite o nome Completo do responsável Pelo Registro de Despesa"
-            value={formData.Responsavel}
-            onChange={(e) => setFormData({ ...formData, Responsavel: e.target.value })}
-            required
-          />
+          <Form.Control type="text" value={formData.Responsavel} readOnly />
         </Form.Group>
 
-        <br />
+        <Form.Group controlId="formObservacoes">
+          <Form.Label>Observações:</Form.Label>
+          <Form.Control
+            as="textarea"
+            rows={3}
+            placeholder="Adicione observações sobre a despesa (mínimo 10 caracteres)"
+            value={formData.Observacoes}
+            onChange={(e) => setFormData({ ...formData, Observacoes: e.target.value })}
+          />
+         
+          {erros.Observacoes && <Alert variant="danger">{erros.Observacoes}</Alert>}
+        </Form.Group>
+        <br></br>
         <Button variant="primary" type="submit">
           Cadastrar Despesa
         </Button>
