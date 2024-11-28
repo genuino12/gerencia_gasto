@@ -6,7 +6,7 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
     Tipo: '',
     Valor: '',
     DataVencimento: '',
-    Responsavel: 'Lucas Genuíno de Jesus',
+    Responsavel: usuarioLogado?.nome || 'Lucas Genuíno de Jesus',
     Observacoes: '',
   });
 
@@ -19,24 +19,20 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
     }
   }, [usuarioLogado]);
 
+  // Formata valores monetários no estilo "R$ 0,00"
   const formatarValor = (valor) => {
-    const valorFormatado = valor.replace(/\D/g, '');
-    return valorFormatado.length > 2
-      ? 'R$ ' + valorFormatado.slice(0, valorFormatado.length - 2) + ',' + valorFormatado.slice(valorFormatado.length - 2)
-      : 'R$ ' + valorFormatado;
-  };
-
-  const formatarDataParaISO = (dataBR) => {
-    if (!dataBR) return '';
-    const [dia, mes, ano] = dataBR.split('/');
-    return `${ano}-${mes}-${dia}`;
+    const valorNumerico = valor.replace(/\D/g, ''); 
+    const inteiro = valorNumerico.slice(0, -2);
+    const centavos = valorNumerico.slice(-2).padStart(2); 
+    return `R$ ${inteiro},${centavos}`;
   };
 
   const validarFormulario = () => {
     const novosErros = {};
 
+    // Validações
     if (!formData.Tipo) novosErros.Tipo = 'Selecione o tipo de despesa.';
-    if (!formData.Valor || formData.Valor === 'R$ ') novosErros.Valor = 'Digite um valor válido.';
+    if (!formData.Valor || formData.Valor === 'R$ 0,00') novosErros.Valor = 'Digite um valor válido.';
     if (!formData.DataVencimento) novosErros.DataVencimento = 'Selecione uma data de vencimento.';
     if (!formData.Observacoes || formData.Observacoes.trim().length < 10) {
       novosErros.Observacoes = 'As observações devem conter pelo menos 10 caracteres.';
@@ -59,13 +55,23 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
       const novaDespesa = {
         id: Date.now(),
         Tipo: formData.Tipo,
-        Valor: formData.Valor,
+        Valor: parseFloat(formData.Valor.replace(/[^\d]/g, '')) / 100, 
         DataVencimento: formData.DataVencimento, 
         Responsavel: formData.Responsavel,
         Observacoes: formData.Observacoes,
       };
+
+      
       adicionarDespesa(novaDespesa);
-      setFormData({ Tipo: '', Valor: '', DataVencimento: '', Observacoes: '' });
+
+      
+      setFormData({
+        Tipo: '',
+        Valor: '',
+        DataVencimento: '',
+        Responsavel: usuarioLogado?.nome || 'Lucas Genuíno de Jesus',
+        Observacoes: '',
+      });
       setErros({});
       setSucesso(true);
 
@@ -79,8 +85,7 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
   };
 
   const Identificar_DataVencimento = (e) => {
-    const data = e.target.value;
-    setFormData({ ...formData, DataVencimento: data });
+    setFormData({ ...formData, DataVencimento: e.target.value });
   };
 
   return (
@@ -102,9 +107,8 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
             <option value="luz">Luz</option>
             <option value="aluguel">Aluguel</option>
             <option value="material">Gastos de Materiais</option>
-            <option value="Funcionarios">Pagamento dos Funcionários</option>
+            <option value="funcionarios">Pagamento dos Funcionários</option>
           </Form.Control>
-          
           {erros.Tipo && <Alert variant="danger">{erros.Tipo}</Alert>}
         </Form.Group>
 
@@ -116,18 +120,16 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
             value={formData.Valor}
             onChange={Identificar_Valor}
           />
-          
           {erros.Valor && <Alert variant="danger">{erros.Valor}</Alert>}
         </Form.Group>
 
         <Form.Group controlId="formDataVencimento">
           <Form.Label>Data de Vencimento:</Form.Label>
           <Form.Control
-            type="date" 
+            type="date"
             value={formData.DataVencimento}
             onChange={Identificar_DataVencimento}
           />
-          
           {erros.DataVencimento && <Alert variant="danger">{erros.DataVencimento}</Alert>}
         </Form.Group>
 
@@ -145,10 +147,9 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
             value={formData.Observacoes}
             onChange={(e) => setFormData({ ...formData, Observacoes: e.target.value })}
           />
-         
           {erros.Observacoes && <Alert variant="danger">{erros.Observacoes}</Alert>}
         </Form.Group>
-        <br></br>
+        <br />
         <Button variant="primary" type="submit">
           Cadastrar Despesa
         </Button>
