@@ -21,16 +21,15 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
 
   // Formata valores monetários no estilo "R$ 0,00"
   const formatarValor = (valor) => {
-    const valorNumerico = valor.replace(/\D/g, ''); 
-    const inteiro = valorNumerico.slice(0, -2);
-    const centavos = valorNumerico.slice(-2).padStart(2); 
-    return `R$ ${inteiro},${centavos}`;
+    const valorNumerico = valor.replace(/\D/g, '');
+    const inteiro = valorNumerico.slice(0, -2) || '0';
+    const centavos = valorNumerico.slice(-2).padStart(2, '0');
+    return `R$ ${parseInt(inteiro).toLocaleString('pt-BR')},${centavos}`;
   };
 
   const validarFormulario = () => {
     const novosErros = {};
 
-    // Validações
     if (!formData.Tipo) novosErros.Tipo = 'Selecione o tipo de despesa.';
     if (!formData.Valor || formData.Valor === 'R$ 0,00') novosErros.Valor = 'Digite um valor válido.';
     if (!formData.DataVencimento) novosErros.DataVencimento = 'Selecione uma data de vencimento.';
@@ -39,9 +38,10 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
     }
 
     const dataAtual = new Date();
+    dataAtual.setHours(0, 0, 0, 0);
     const dataInserida = new Date(formData.DataVencimento);
 
-    if (formData.DataVencimento && (isNaN(dataInserida.getTime()) || dataInserida < dataAtual.setHours(0, 0, 0, 0))) {
+    if (formData.DataVencimento && (isNaN(dataInserida.getTime()) || dataInserida < dataAtual)) {
       novosErros.DataVencimento = 'A data de vencimento deve ser válida e não pode ser anterior a hoje.';
     }
 
@@ -49,33 +49,37 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
     return Object.keys(novosErros).length === 0;
   };
 
-  const Envio = (e) => {
+  const limparFormulario = () => {
+    setFormData({
+      Tipo: '',
+      Valor: '',
+      DataVencimento: '',
+      Responsavel: usuarioLogado?.nome || 'Lucas Genuíno de Jesus',
+      Observacoes: '',
+    });
+    setErros({});
+  };
+
+  const Envio = async (e) => {
     e.preventDefault();
+
     if (validarFormulario()) {
-      const novaDespesa = {
-        id: Date.now(),
-        Tipo: formData.Tipo,
-        Valor: parseFloat(formData.Valor.replace(/[^\d]/g, '')) / 100, 
-        DataVencimento: formData.DataVencimento, 
-        Responsavel: formData.Responsavel,
-        Observacoes: formData.Observacoes,
-      };
+      try {
+        const novaDespesa = {
+          tipo_despesa_id: formData.Tipo,
+          valor: parseFloat(formData.Valor.replace('R$', '').replace('.', '').replace(',', '.')),
+          data_vencimento: formData.DataVencimento,
+          responsavel_nome: formData.Responsavel,
+          observacao: formData.Observacoes,
+        };
 
-      
-      adicionarDespesa(novaDespesa);
-
-      
-      setFormData({
-        Tipo: '',
-        Valor: '',
-        DataVencimento: '',
-        Responsavel: usuarioLogado?.nome || 'Lucas Genuíno de Jesus',
-        Observacoes: '',
-      });
-      setErros({});
-      setSucesso(true);
-
-      setTimeout(() => setSucesso(false), 3000);
+        await adicionarDespesa(novaDespesa);
+        limparFormulario();
+        setSucesso(true);
+        setTimeout(() => setSucesso(false), 3000);
+      } catch (error) {
+        console.error('Erro ao adicionar despesa:', error);
+      }
     }
   };
 
@@ -89,10 +93,13 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
   };
 
   return (
-    <div>
+    <div className="container mt-4">
       <h2>Cadastrar Gasto</h2>
 
-      {sucesso && <Alert variant="success">Despesa cadastrada com sucesso.</Alert>}
+      {sucesso && <Alert variant="success">Despesa cadastrada com sucesso!</Alert>}
+      {Object.keys(erros).length > 0 && (
+        <Alert variant="danger">Corrija os erros antes de enviar o formulário.</Alert>
+      )}
 
       <Form onSubmit={Envio}>
         <Form.Group controlId="formTipo">
@@ -103,11 +110,11 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
             onChange={(e) => setFormData({ ...formData, Tipo: e.target.value })}
           >
             <option value="">Selecionar a despesa</option>
-            <option value="água">Água</option>
-            <option value="luz">Luz</option>
-            <option value="aluguel">Aluguel</option>
-            <option value="material">Gastos de Materiais</option>
-            <option value="funcionarios">Pagamento dos Funcionários</option>
+            <option value="1">Água</option>
+            <option value="2">Luz</option>
+            <option value="3">Aluguel</option>
+            <option value="4">Gastos de Materiais</option>
+            <option value="5">Pagamento dos Funcionários</option>
           </Form.Control>
           {erros.Tipo && <Alert variant="danger">{erros.Tipo}</Alert>}
         </Form.Group>
@@ -149,6 +156,7 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
           />
           {erros.Observacoes && <Alert variant="danger">{erros.Observacoes}</Alert>}
         </Form.Group>
+
         <br />
         <Button variant="primary" type="submit">
           Cadastrar Despesa

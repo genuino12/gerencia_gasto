@@ -49,11 +49,16 @@ class GastoServico {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(novaDespesa),
+        
       });
+        console.log("Dados enviados para a API:", novaDespesa);
 
       if (!response.ok) {
-        throw new Error(`Erro ao adicionar despesa: ${response.statusText}`);
+        const errorDetails = await response.json();
+        console.error("Detalhes do erro da API:", errorDetails);
+        throw new Error(`Erro ao adicionar despesa: ${errorDetails.message || response.statusText}`);
       }
+      
 
       const despesaCriada = await response.json();
       return despesaCriada;

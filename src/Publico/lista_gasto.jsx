@@ -1,63 +1,82 @@
 import React, { useState } from "react";
 import { Modal, Button, Table, Form, InputGroup } from "react-bootstrap";
 
-const ListaDespesa = ({ despesas, removerDespesa, atualizarDespesa }) => {
-  const [showModalExcluir, setShowModalExcluir] = useState(false);
-  const [showModalEditar, setShowModalEditar] = useState(false);
+const ListaDespesa = ({ despesas, removerDespesa, atualizarDespesa, adicionarDespesa }) => {
+  const [showModal, setShowModal] = useState(false);
+  const [modalTipo, setModalTipo] = useState(""); // 'excluir', 'editar' ou 'inserir'
   const [despesaSelecionada, setDespesaSelecionada] = useState(null);
-  const [busca, setBusca] = useState("");
-  const [despesaEditando, setDespesaEditando] = useState(null);
+  const [filtro, setFiltro] = useState(""); // Estado para o filtro
+  const [novaDespesa, setNovaDespesa] = useState({
+    Tipo: "",
+    Valor: "",
+    DataVencimento: "",
+    Observacoes: "",
+  });
 
-  const confirmarExclusao = (id) => {
-    setDespesaSelecionada(id);
-    setShowModalExcluir(true);
+  // Abrir modal genérico
+  const abrirModal = (tipo, despesa = null) => {
+    setModalTipo(tipo);
+    setDespesaSelecionada(despesa);
+    setShowModal(true);
   };
 
-  const excluirDespesa = () => {
-    if (despesaSelecionada !== null) {
-      removerDespesa(despesaSelecionada);
-      setDespesaSelecionada(null);
-      setShowModalExcluir(false);
+  const fecharModal = () => {
+    setShowModal(false);
+    setDespesaSelecionada(null);
+    setNovaDespesa({
+      Tipo: "",
+      Valor: "",
+      DataVencimento: "",
+      Observacoes: "",
+    }); // Limpa o formulário de inserção
+  };
+
+  const confirmarExclusao = () => {
+    if (despesaSelecionada?.id) {
+      console.log("Despesa Excluída:", despesaSelecionada);  // Log para verificar a exclusão
+      removerDespesa(despesaSelecionada.id);
+      fecharModal();
     }
-  };
-
-  const iniciarEdicao = (despesa) => {
-    setDespesaEditando({ ...despesa });
-    setShowModalEditar(true);
   };
 
   const salvarEdicao = () => {
-    if (despesaEditando) {
-      atualizarDespesa(despesaEditando);
-      setDespesaEditando(null);
-      setShowModalEditar(false);
+    if (despesaSelecionada) {
+      console.log("Despesa Editada:", despesaSelecionada);  // Log para verificar os dados antes de editar
+      atualizarDespesa(despesaSelecionada);
+      fecharModal();
     }
   };
 
+  const salvarInsercao = () => {
+    console.log("Nova Despesa Inserida:", novaDespesa);  // Log para verificar os dados antes de inserir
+    adicionarDespesa(novaDespesa);
+    fecharModal();
+  };
+
   const formatarData = (data) => {
-    if (!data) return "";
+    if (!data) return "Data não especificada";
     const [ano, mes, dia] = data.split("-");
     return `${dia}/${mes}/${ano}`;
   };
 
-  const despesasFiltradas = despesas.filter(
-    (despesa) =>
-      despesa.Tipo.toLowerCase().includes(busca.toLowerCase()) ||
-      despesa.Responsavel.toLowerCase().includes(busca.toLowerCase())
+  // Filtrar despesas com base no filtro digitado
+  const despesasFiltradas = despesas.filter((despesa) =>
+    despesa.Tipo?.toLowerCase().includes(filtro.toLowerCase()) // Filtro para o tipo da despesa
   );
 
   return (
     <div>
+      {/* Campo de filtro */}
       <InputGroup className="mb-3">
         <Form.Control
-          placeholder="Buscar por tipo ou responsável"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
+          placeholder="Filtrar por tipo de despesa"
+          value={filtro}
+          onChange={(e) => setFiltro(e.target.value)} // Atualiza o estado do filtro conforme a digitação
         />
       </InputGroup>
 
       {despesasFiltradas.length === 0 ? (
-        <p>Não há despesas correspondentes à busca.</p>
+        <p>Não há despesas cadastradas.</p>
       ) : (
         <Table striped bordered hover>
           <thead>
@@ -71,25 +90,25 @@ const ListaDespesa = ({ despesas, removerDespesa, atualizarDespesa }) => {
             </tr>
           </thead>
           <tbody>
-            {despesasFiltradas.map((despesa) => (
-              <tr key={despesa.id}>
-                <td>{despesa.Tipo}</td>
-                <td>{despesa.Valor}</td>
+            {despesasFiltradas.map((despesa, index) => (
+              <tr key={despesa.id || index}>
+                <td>{despesa.Tipo ? despesa.Tipo : "Tipo não especificado"}</td>
+                <td>{despesa.Valor ? despesa.Valor : "Valor não especificado"}</td>
                 <td>{formatarData(despesa.DataVencimento)}</td>
-                <td>{despesa.Responsavel}</td>
-                <td>{despesa.Observacoes || "Sem observações"}</td>
+                <td>{despesa.Responsavel ? despesa.Responsavel : "Responsável não especificado"}</td>
+                <td>{despesa.Observacoes ? despesa.Observacoes : "Sem observações"}</td>
                 <td>
                   <Button
                     variant="warning"
                     size="sm"
-                    onClick={() => iniciarEdicao(despesa)}
+                    onClick={() => abrirModal("editar", { ...despesa })}
                   >
                     Alterar
                   </Button>{" "}
                   <Button
                     variant="danger"
                     size="sm"
-                    onClick={() => confirmarExclusao(despesa.id)}
+                    onClick={() => abrirModal("excluir", despesa)}
                   >
                     Excluir
                   </Button>
@@ -100,45 +119,36 @@ const ListaDespesa = ({ despesas, removerDespesa, atualizarDespesa }) => {
         </Table>
       )}
 
-      {/* Modal de exclusão */}
-      <Modal show={showModalExcluir} onHide={() => setShowModalExcluir(false)}>
+      {/* Modal Genérico */}
+      <Modal show={showModal} onHide={fecharModal}>
         <Modal.Header closeButton>
-          <Modal.Title>Confirmar Exclusão</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>Tem certeza de que deseja excluir esta despesa?</Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModalExcluir(false)}>
-            Cancelar
-          </Button>
-          <Button variant="danger" onClick={excluirDespesa}>
-            Excluir
-          </Button>
-        </Modal.Footer>
-      </Modal>
-
-      {/* Modal de edição */}
-      <Modal show={showModalEditar} onHide={() => setShowModalEditar(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Editar Despesa</Modal.Title>
+          <Modal.Title>
+            {modalTipo === "excluir" ? "Confirmar Exclusão" : modalTipo === "editar" ? "Editar Despesa" : "Inserir Nova Despesa"}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {despesaEditando && (
+          {modalTipo === "excluir" ? (
+            <p>Tem certeza de que deseja excluir esta despesa?</p>
+          ) : modalTipo === "editar" ? (
             <Form>
               <Form.Group controlId="formTipoEditar">
                 <Form.Label>Tipo:</Form.Label>
                 <Form.Control
                   as="select"
-                  value={despesaEditando.Tipo}
+                  value={despesaSelecionada?.Tipo || ""}
                   onChange={(e) =>
-                    setDespesaEditando({ ...despesaEditando, Tipo: e.target.value })
+                    setDespesaSelecionada({
+                      ...despesaSelecionada,
+                      Tipo: e.target.value,
+                    })
                   }
                 >
                   <option value="">Selecionar tipo</option>
-                  <option value="água">Água</option>
-                  <option value="luz">Luz</option>
-                  <option value="aluguel">Aluguel</option>
-                  <option value="material">Gastos de Materiais</option>
-                  <option value="Funcionarios">Pagamento dos Funcionários</option>
+                  <option value="1">Água</option>
+                  <option value="2">Luz</option>
+                  <option value="3">Aluguel</option>
+                  <option value="4">Gastos de Materiais</option>
+                  <option value="5">Pagamento dos Funcionários</option>
                 </Form.Control>
               </Form.Group>
 
@@ -146,9 +156,12 @@ const ListaDespesa = ({ despesas, removerDespesa, atualizarDespesa }) => {
                 <Form.Label>Valor:</Form.Label>
                 <Form.Control
                   type="text"
-                  value={despesaEditando.Valor}
+                  value={despesaSelecionada?.Valor || ""}
                   onChange={(e) =>
-                    setDespesaEditando({ ...despesaEditando, Valor: e.target.value })
+                    setDespesaSelecionada({
+                      ...despesaSelecionada,
+                      Valor: e.target.value,
+                    })
                   }
                 />
               </Form.Group>
@@ -157,10 +170,10 @@ const ListaDespesa = ({ despesas, removerDespesa, atualizarDespesa }) => {
                 <Form.Label>Data de Vencimento:</Form.Label>
                 <Form.Control
                   type="date"
-                  value={despesaEditando.DataVencimento}
+                  value={despesaSelecionada?.DataVencimento || ""}
                   onChange={(e) =>
-                    setDespesaEditando({
-                      ...despesaEditando,
+                    setDespesaSelecionada({
+                      ...despesaSelecionada,
                       DataVencimento: e.target.value,
                     })
                   }
@@ -172,10 +185,76 @@ const ListaDespesa = ({ despesas, removerDespesa, atualizarDespesa }) => {
                 <Form.Control
                   as="textarea"
                   rows={3}
-                  value={despesaEditando.Observacoes}
+                  value={despesaSelecionada?.Observacoes || ""}
                   onChange={(e) =>
-                    setDespesaEditando({
-                      ...despesaEditando,
+                    setDespesaSelecionada({
+                      ...despesaSelecionada,
+                      Observacoes: e.target.value,
+                    })
+                  }
+                />
+              </Form.Group>
+            </Form>
+          ) : (
+            <Form>
+              <Form.Group controlId="formTipoInserir">
+                <Form.Label>Tipo:</Form.Label>
+                <Form.Control
+                  as="select"
+                  value={novaDespesa.Tipo}
+                  onChange={(e) =>
+                    setNovaDespesa({
+                      ...novaDespesa,
+                      Tipo: e.target.value,
+                    })
+                  }
+                >
+                  <option value="">Selecionar tipo</option>
+                  <option value="1">Água</option>
+                  <option value="2">Luz</option>
+                  <option value="3">Aluguel</option>
+                  <option value="4">Gastos de Materiais</option>
+                  <option value="5">Pagamento dos Funcionários</option>
+                </Form.Control>
+              </Form.Group>
+
+              <Form.Group controlId="formValorInserir">
+                <Form.Label>Valor:</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={novaDespesa.Valor}
+                  onChange={(e) =>
+                    setNovaDespesa({
+                      ...novaDespesa,
+                      Valor: e.target.value,
+                    })
+                  }
+                />
+              </Form.Group>
+
+              <Form.Group controlId="formDataInserir">
+                <Form.Label>Data de Vencimento:</Form.Label>
+                <Form.Control
+                  type="date"
+                  value={novaDespesa.DataVencimento}
+                  onChange={(e) =>
+                    setNovaDespesa({
+                      ...novaDespesa,
+                      DataVencimento: e.target.value,
+                    })
+                  }
+                />
+              </Form.Group>
+
+              <Form.Group controlId="formObservacoesInserir">
+                <Form.Label>Observações:</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  value={novaDespesa.Observacoes}
+                  onChange={(e) =>
+                    setNovaDespesa({
+                      ...novaDespesa,
                       Observacoes: e.target.value,
                     })
                   }
@@ -185,12 +264,22 @@ const ListaDespesa = ({ despesas, removerDespesa, atualizarDespesa }) => {
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModalEditar(false)}>
+          <Button variant="secondary" onClick={fecharModal}>
             Cancelar
           </Button>
-          <Button variant="primary" onClick={salvarEdicao}>
-            Salvar Alterações
-          </Button>
+          {modalTipo === "excluir" ? (
+            <Button variant="danger" onClick={confirmarExclusao}>
+              Excluir
+            </Button>
+          ) : modalTipo === "editar" ? (
+            <Button variant="primary" onClick={salvarEdicao}>
+              Salvar
+            </Button>
+          ) : (
+            <Button variant="success" onClick={salvarInsercao}>
+              Inserir
+            </Button>
+          )}
         </Modal.Footer>
       </Modal>
     </div>

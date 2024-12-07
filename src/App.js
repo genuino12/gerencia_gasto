@@ -5,6 +5,8 @@ import { useState, useEffect } from 'react';
 import CadastrarGasto from './Publico/Cadastrar_gasto';
 import ListaDespesa from './Publico/lista_gasto';
 import GastoServico from './serviços/gastoServico';
+import TipoDespesa from './Publico/tipo_despesa';
+
 
 const gastoServico = new GastoServico();
 
@@ -26,6 +28,9 @@ function App() {
   const adicionarDespesa = async (novaDespesa) => {
     try {
       const despesaAdicionada = await gastoServico.inserirDespesa(novaDespesa);
+      if (!despesaAdicionada || Object.keys(despesaAdicionada).length === 0) {
+        throw new Error('Resposta da API está vazia ou inválida.');
+      }
       setDespesas((prevDespesas) => [...prevDespesas, despesaAdicionada]);
     } catch (error) {
       console.error('Erro ao adicionar despesa:', error);
@@ -69,21 +74,28 @@ function App() {
 
   return (
     <Router>
+      {/* Navbar */}
       <Navbar bg="dark" variant="dark" expand="lg">
         <Container>
-          <Navbar.Brand as={Link} to="/">Gerenciar Gasto</Navbar.Brand>
+          <Navbar.Brand as={Link} to="/">Planeta Verde</Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
               <Nav.Link as={Link} to="/cadastrar-gasto">Cadastrar Gasto</Nav.Link>
+              <Nav.Link as={Link} to="/tipo-despesa">Cadastrar Tipo de Despesas</Nav.Link>
               <Nav.Link as={Link} to="/lista-gasto">Lista de Despesas</Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>
       </Navbar>
 
+      {/* Conteúdo principal */}
       <Container className="mt-4">
         <Routes>
+          <Route
+            path="/"
+            element={<div>Bem-vindo ao Planeta Verde!</div>}
+          />
           <Route
             path="/cadastrar-gasto"
             element={<CadastrarGasto adicionarDespesa={adicionarDespesa} />}
@@ -99,6 +111,7 @@ function App() {
               />
             }
           />
+          <Route path="/tipo-despesa" element={<TipoDespesa />} />
           <Route path="*" element={<div>Página não encontrada!</div>} />
         </Routes>
       </Container>
