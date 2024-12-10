@@ -1,7 +1,7 @@
 const API = "http://localhost:4000";
 
 class GastoServico {
-  async obterTodasDespesas() {
+  async buscarDespesas() {
     try {
       const response = await fetch(`${API}/despesas`, {
         headers: {

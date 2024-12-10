@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Form, Alert } from 'react-bootstrap';
+import { Button, Form, Alert, Nav, Container, Navbar, Col } from 'react-bootstrap';
+import {Link } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
+
 
 const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
   const [formData, setFormData] = useState({
@@ -93,21 +96,37 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
   };
 
   return (
+  
     <div className="container mt-4">
       <h2>Cadastrar Gasto</h2>
+      <Navbar bg="" variant=""  className="justify-content-center">
+  <Container>
+  <Col className="d-flex justify-content-center">
+    <Nav className="me-auto">
+      <Nav.Link as={Link} to="/tipo-despesa">
+      <Button variant="dark">Tipo de Despesas</Button>
+      </Nav.Link>
+      <Nav.Link as={Link} to="/lista-gasto">
+      <Button variant="dark">Lista de Gasto</Button>
+      </Nav.Link>
+    </Nav>
+    </Col>
+  </Container>
+</Navbar>
 
       {sucesso && <Alert variant="success">Despesa cadastrada com sucesso!</Alert>}
       {Object.keys(erros).length > 0 && (
         <Alert variant="danger">Corrija os erros antes de enviar o formulário.</Alert>
       )}
 
-      <Form onSubmit={Envio}>
+      <Form onSubmit={Envio} >
         <Form.Group controlId="formTipo">
           <Form.Label>Tipo de Despesa:</Form.Label>
           <Form.Control
             as="select"
             value={formData.Tipo}
             onChange={(e) => setFormData({ ...formData, Tipo: e.target.value })}
+            required
           >
             <option value="">Selecionar a despesa</option>
             <option value="1">Água</option>
@@ -116,7 +135,6 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
             <option value="4">Gastos de Materiais</option>
             <option value="5">Pagamento dos Funcionários</option>
           </Form.Control>
-          {erros.Tipo && <Alert variant="danger">{erros.Tipo}</Alert>}
         </Form.Group>
 
         <Form.Group controlId="formValor">
@@ -126,8 +144,8 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
             placeholder="Digite o valor"
             value={formData.Valor}
             onChange={Identificar_Valor}
+            required
           />
-          {erros.Valor && <Alert variant="danger">{erros.Valor}</Alert>}
         </Form.Group>
 
         <Form.Group controlId="formDataVencimento">
@@ -136,8 +154,8 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
             type="date"
             value={formData.DataVencimento}
             onChange={Identificar_DataVencimento}
+            required
           />
-          {erros.DataVencimento && <Alert variant="danger">{erros.DataVencimento}</Alert>}
         </Form.Group>
 
         <Form.Group controlId="formResponsavel">
@@ -153,8 +171,8 @@ const CadastrarGasto = ({ adicionarDespesa, usuarioLogado }) => {
             placeholder="Adicione observações sobre a despesa (mínimo 10 caracteres)"
             value={formData.Observacoes}
             onChange={(e) => setFormData({ ...formData, Observacoes: e.target.value })}
+            required
           />
-          {erros.Observacoes && <Alert variant="danger">{erros.Observacoes}</Alert>}
         </Form.Group>
 
         <br />

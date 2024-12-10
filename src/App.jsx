@@ -1,12 +1,11 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
-import { Container, Navbar, Nav } from 'react-bootstrap';
+import { Container, Navbar, Nav, Col, Image } from 'react-bootstrap';
 import { useState, useEffect } from 'react';
 import CadastrarGasto from './Publico/Cadastrar_gasto';
 import ListaDespesa from './Publico/lista_gasto';
 import GastoServico from './serviços/gastoServico';
 import TipoDespesa from './Publico/tipo_despesa';
-
 
 const gastoServico = new GastoServico();
 
@@ -16,7 +15,7 @@ function App() {
   useEffect(() => {
     const carregarDespesas = async () => {
       try {
-        const dados = await gastoServico.obterTodasDespesas();
+        const dados = await gastoServico.buscarDespesas();
         setDespesas(Array.isArray(dados) ? dados : []);
       } catch (error) {
         console.error('Erro ao carregar despesas:', error);
@@ -63,39 +62,53 @@ function App() {
     }
   };
 
-  const buscarDespesaPorFiltro = async (filtro) => {
-    try {
-      const despesasFiltradas = await gastoServico.buscarDespesaPorFiltro(filtro);
-      setDespesas(Array.isArray(despesasFiltradas) ? despesasFiltradas : []);
-    } catch (error) {
-      console.error('Erro ao buscar despesas com filtro:', error);
-    }
-  };
-
   return (
     <Router>
-      {/* Navbar */}
-      <Navbar bg="dark" variant="dark" expand="lg">
+     
+      <Container>
+        <Col className="d-flex justify-content-center">
+        <Image
+          src="/img/logo1.jpg"
+          roundedCircle
+           style={{ width: '250px', height: '250px' }}
+            />
+        </Col>
+      </Container>
+
+      <Navbar bg="dark" variant="dark" >
         <Container>
-          <Navbar.Brand as={Link} to="/">Planeta Verde</Navbar.Brand>
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
+          <Navbar.Brand as={Link} to="/cadastrar-gasto">
+              <h3 >Planeta Verde</h3>
+          </Navbar.Brand>
             <Nav className="me-auto">
-              <Nav.Link as={Link} to="/cadastrar-gasto">Cadastrar Gasto</Nav.Link>
-              <Nav.Link as={Link} to="/tipo-despesa">Cadastrar Tipo de Despesas</Nav.Link>
-              <Nav.Link as={Link} to="/lista-gasto">Lista de Despesas</Nav.Link>
+              <Nav.Link as={Link} to="/doador">
+                Doador
+              </Nav.Link>
+              <Nav.Link as={Link} to="/doacao">
+                Doaçao 
+              </Nav.Link>
+              <Nav.Link as={Link} to="/projetos">
+                Projetos 
+              </Nav.Link>
+              <Nav.Link as={Link} to="/atividades">
+                Atividade
+              </Nav.Link>
+              <Nav.Link as={Link} to="/pedidos">
+                Pedido
+              </Nav.Link>
+              <Nav.Link as={Link} to="/Registro de Despesas">
+                Registro de Despesas
+              </Nav.Link>
+              <Nav.Link as={Link} to="/sobre_nos">
+                Sobre nós
+              </Nav.Link>
             </Nav>
-          </Navbar.Collapse>
         </Container>
       </Navbar>
-
-      {/* Conteúdo principal */}
+           
       <Container className="mt-4">
         <Routes>
-          <Route
-            path="/"
-            element={<div>Bem-vindo ao Planeta Verde!</div>}
-          />
+          
           <Route
             path="/cadastrar-gasto"
             element={<CadastrarGasto adicionarDespesa={adicionarDespesa} />}
@@ -107,7 +120,6 @@ function App() {
                 despesas={despesas}
                 removerDespesa={removerDespesa}
                 atualizarDespesa={atualizarDespesa}
-                buscarDespesaPorFiltro={buscarDespesaPorFiltro}
               />
             }
           />

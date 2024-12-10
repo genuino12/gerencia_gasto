@@ -3,7 +3,7 @@ import { Form, Button, Alert } from "react-bootstrap";
 
 const CadastrarTipoDespesa = () => {
   const [nome, setNome] = useState(""); 
-  const [sucesso] = useState(false); 
+  const [sucesso, setSucesso] = useState(false); 
   const [erro, setErro] = useState(""); 
 
   const handleSubmit = (e) => {
@@ -11,15 +11,25 @@ const CadastrarTipoDespesa = () => {
 
     if (nome.trim().length === 0) {
       setErro("O nome do tipo de despesa é obrigatório.");
+      setSucesso(false);
       return;
     }
+
+   
+    setErro(""); 
+    setSucesso(true);
+    setNome("");
   };
 
   return (
     <div>
       <h2>Cadastrar Tipo de Despesa</h2>
 
-      {sucesso && <Alert variant="success">Tipo de despesa cadastrado com sucesso.</Alert>}
+      {sucesso && (
+        <Alert variant="success" onClose={() => setSucesso(false)} dismissible>
+          Tipo de despesa cadastrado com sucesso.
+        </Alert>
+      )}
       {erro && <Alert variant="danger">{erro}</Alert>}
 
       <Form onSubmit={handleSubmit}>
@@ -30,6 +40,7 @@ const CadastrarTipoDespesa = () => {
             placeholder="Digite o nome do tipo de despesa"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
+            required 
           />
         </Form.Group>
         <br />
