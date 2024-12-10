@@ -1,0 +1,18 @@
+CREATE TABLE despesas (
+    id INT AUTO_INCREMENT PRIMARY KEY,                -- ID único da despesa
+    tipo_despesa_id INT NOT NULL,                     -- Referência ao tipo de despesa
+    valor DECIMAL(10, 2) NOT NULL,                    -- Valor da despesa
+    data_vencimento DATE NOT NULL,                    -- Data de vencimento da despesa
+    responsavel_nome VARCHAR(100) NOT NULL,           -- Nome do responsável
+    observacao TEXT,                                  -- Observações adicionais
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,   -- Data de criação do registro
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- Data da última atualização
+    FOREIGN KEY (tipo_despesa_id) REFERENCES tipo_despesas(id) ON DELETE CASCADE -- Chave estrangeira
+);
+
+CREATE TABLE tipo_despesas (
+    id INT AUTO_INCREMENT PRIMARY KEY, -- ID único para cada tipo de despesa
+    nome VARCHAR(50) NOT NULL    -- Nome do tipo de despesa, ex: "Luz", "Água"
+);
+tipo_de_despesa eu inserir direto do banco de dados então ele não tem POST,GET,DELETE E PUT
+no da tabela e gasto_db
